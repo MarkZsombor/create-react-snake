@@ -61,7 +61,7 @@ router.post('/move', function (req, res) {
         if (getDistance(allSnakes[snake].body[0].x, allSnakes[snake].body[0].y, myHead) === 2) {
 
           //Decide on head collision depending on size
-          if (gs.you.body.length <= allSnakes[snake].body.length {
+          if (gs.you.body.length <= allSnakes[snake].body.length) {
             //Pathfinding will throw an error if we try to set a space outside the board
             if (allSnakes[snake].body[0].x + 1 < gs.board.width) {
               grid.setWalkableAt((allSnakes[snake].body[0].x + 1), allSnakes[snake].body[0].y, false);
