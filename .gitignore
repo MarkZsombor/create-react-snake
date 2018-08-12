@@ -37,3 +37,4 @@ routes/example.json
 .env
 /*.env
 .DS_Store
+package-lock.json
