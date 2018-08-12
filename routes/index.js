@@ -49,7 +49,7 @@ router.post('/move', function (req, res) {
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
     //Mark other snake heads
-    const allSnakes = gs.snakes;
+    const allSnakes = gs.board.snakes;
     for (let snake in allSnakes) {
       if (allSnakes[snake].id !== gs.you.id) {
         //Don't run into body
@@ -143,7 +143,7 @@ router.post('/move', function (req, res) {
 
     //check for other snakes
     function checkSnakes(gs, pm) {
-      const allSnakes = gs.snakes
+      const allSnakes = gs.board.snakes
       for (let snake in allSnakes) {
         if (allSnakes[snake].id !== gs.you.id) {
           //Don't run into body
