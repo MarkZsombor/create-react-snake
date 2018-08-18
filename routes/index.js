@@ -40,7 +40,7 @@ router.post('/move', function (req, res) {
     x: gameState.you.body[0].x,
     y: gameState.you.body[0].y
   };
-  console.log("myHead", myHead);
+  // console.log("myHead", myHead);
   //Create an empty board
   const grid = new PF.Grid(gameState.board.width, gameState.board.height);
 
@@ -247,7 +247,7 @@ function setMove(path, head) {
 // Make Uter say funny things for hilarity
 function getTaunt(gs) {
   let tauntIndex = 0;
-  if (gs.you.health > 90) {
+  if (gs.you.health > 40) {
     tauntIndex = 0;
   } else if (gs.you.health < 30) {
     tauntIndex = 5;
@@ -263,7 +263,6 @@ function getTaunt(gs) {
 
 //Determines the distance from the snakes head to something
 function getDistance(a, b, head) {
-  console.log('inside the get distance function', a, b, head)
   let x = Math.abs(a - head.x) 
   let y = Math.abs(b - head.y);
   return x + y;
@@ -272,15 +271,15 @@ function getDistance(a, b, head) {
 //return the closest food item
 function findFood(gs) {
   let myHead = gs.you.body[0]
-  console.log("looking for food")
-  console.log('first food in array', gs.board.food[0].x, gs.board.food[0].y)
+  // console.log("looking for food")
+  // console.log('first food in array', gs.board.food[0].x, gs.board.food[0].y)
   const allTargets = [];
   for (let i in gs.board.food) {
-    console.log('inside the food for loop', i)
-    console.log(gs.board.food[i].x, gs.board.food[i].y)
-    console.log(myHead)
+    // console.log('inside the food for loop', i)
+    // console.log(gs.board.food[i].x, gs.board.food[i].y)
+    // console.log(myHead)
     let distance = getDistance(gs.board.food[i].x, gs.board.food[i].y, myHead);
-    console.log('distance to food', distance)
+    // console.log('distance to food', distance)
     //Add a weight that reduces the likelihood of targeting wall food
     if (!gs.board.food[i].x || !gs.board.food[i].y || gs.board.food[i].x === gs.board.width - 1 || gs.board.food[i].y === gs.board.height - 1) {
       distance += 10;
@@ -298,7 +297,7 @@ function findFood(gs) {
     return a.distance - b.distance;
   });
   //Return the closest
-  console.log("closest food is ", allTargets[0]);
+  // console.log("closest food is ", allTargets[0]);
   return allTargets[0];
 }
 
