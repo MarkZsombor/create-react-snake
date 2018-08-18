@@ -47,7 +47,7 @@ router.post('/move', function (req, res) {
   //Marks areas on the Grid where the snake can't pass into
   function setGrid(gs, grid) {
     //Mark my snake in grid
-    for (let i = 1; i < gs.you.body.length - 1; i++) {
+    for (let i = 1; i < gs.you.body.length; i++) {
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
     //Mark other snake heads
@@ -247,7 +247,7 @@ function setMove(path, head) {
 // Make Uter say funny things for hilarity
 function getTaunt(gs) {
   let tauntIndex = 0;
-  if (gs.you.health > 40) {
+  if (gs.you.health > 90) {
     tauntIndex = 0;
   } else if (gs.you.health < 30) {
     tauntIndex = 5;
@@ -335,7 +335,7 @@ function chooseTarget(gs) {
   //     return findFood(gs);
   // } else 
   if (gs.board.snakes.length == 2) {
-    if (gs.you.health > 111) {
+    if (gs.you.health > 40) {
       return findTail(gs);
     } else {
       return findFood(gs);
