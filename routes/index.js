@@ -47,7 +47,8 @@ router.post('/move', function (req, res) {
   //Marks areas on the Grid where the snake can't pass into
   function setGrid(gs, grid) {
     //Mark my snake in grid
-    for (let i = 1; i < gs.you.body.length; i++) {
+    for (let i = 1; i < gs.you.body.length -1; i++) {
+      console.log('my snake part', gs.you.body[i]);
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
     //Mark other snake heads
@@ -86,8 +87,11 @@ router.post('/move', function (req, res) {
   // Set the board, choose the target and generate a path
   setGrid(gameState, grid);
   const closestTarget = chooseTarget(gameState);
+  console.log('head', myHead)
+  console.log('current target', closestTarget)
   const finder = new PF.AStarFinder;
   const path = finder.findPath(myHead.x, myHead.y, closestTarget.x, closestTarget.y, grid);
+  console.log('next target', path[1])
   const snakeResponse = {};
 
   // if no path exists or a bigger snake can move into the same space choose a safe direction
@@ -145,7 +149,7 @@ router.post('/move', function (req, res) {
 
     //check for other snakes
     function checkSnakes(gs, pm) {
-      const allSnakes = gs.board.snakes
+      const allSnakes = getLivingSnakes(gs);
       for (let snake in allSnakes) {
         if (allSnakes[snake].id !== gs.you.id) {
           //Don't run into body
@@ -310,7 +314,6 @@ function findTail(gs) {
   }
   let tailPosition = snakeBody[snakeLength - 1];
   return tailPosition;
-
 }
 
 
@@ -328,14 +331,29 @@ function getLongestLength(gs) {
   return longestSnake;
 }
 
+//creates an array that includes only living snakes
+function getLivingSnakes(gs) {
+  const livingSnakes =[];
+  const allSnakes = gs.board.snakes;
+  for (let snake of allSnakes) {
+    if (snake.health > 0) {
+      livingSnakes.push(snake);
+    }
+  }
+  return livingSnakes;
+}
+
 // Checks current health to switch between tail chasing and food chasing.
 function chooseTarget(gs) {
   // Toggle to keep you as the longest snake
   // if (gs.you.length < getLongestLength(gs)){
   //     return findFood(gs);
   // } else 
-  if (gs.board.snakes.length == 2) {
+  livingSnakes = getLivingSnakes(gs);
+  // console.log('number of snakes', livingSnakes.length)
+  if (livingSnakes.length == 2) {
     if (gs.you.health > 40) {
+      console.log('finding my tail')
       return findTail(gs);
     } else {
       return findFood(gs);
