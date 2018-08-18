@@ -21,6 +21,7 @@ router.post('/end', (req, res) => {
 });
 
 router.post('/start', function (req, res) {
+  // console.log("Starter Request Object", req.body)
   const snakeInfo = {
     color: '#FFD90F',
     // head_url: 'http://www.simpsonspark.com/images/persos/contributions/uter-22544.jpg',
@@ -32,13 +33,14 @@ router.post('/start', function (req, res) {
 });
 
 router.post('/move', function (req, res) {
+  // console.log("Move Request Object", req.body)
   const gameState = req.body;
 
   const myHead = {
     x: gameState.you.body[0].x,
     y: gameState.you.body[0].y
   };
-
+  console.log("myHead", myHead);
   //Create an empty board
   const grid = new PF.Grid(gameState.board.width, gameState.board.height);
 
@@ -209,12 +211,15 @@ router.post('/move', function (req, res) {
 
     snakeResponse.move = validMoves[0].direction;
     // snakeResponse.taunt = taunts[1];
+    console.log(snakeResponse)
     return res.json(snakeResponse);
 
   } else {
     
     snakeResponse.move = setMove(path, myHead);
     // snakeResponse.taunt = taunts[getTaunt(gameState)];
+    console.log(snakeResponse)
+
     return res.json(snakeResponse);
 
   }
@@ -257,13 +262,25 @@ function getTaunt(gs) {
 }
 
 //Determines the distance from the snakes head to something
-const getDistance = (a, b, head) => (Math.abs(a - head.x) + Math.abs(b - head.y));
+function getDistance(a, b, head) {
+  console.log('inside the get distance function', a, b, head)
+  let x = Math.abs(a - head.x) 
+  let y = Math.abs(b - head.y);
+  return x + y;
+} 
 
 //return the closest food item
 function findFood(gs) {
+  let myHead = gs.you.body[0]
+  console.log("looking for food")
+  console.log('first food in array', gs.board.food[0].x, gs.board.food[0].y)
   const allTargets = [];
   for (let i in gs.board.food) {
+    console.log('inside the food for loop', i)
+    console.log(gs.board.food[i].x, gs.board.food[i].y)
+    console.log(myHead)
     let distance = getDistance(gs.board.food[i].x, gs.board.food[i].y, myHead);
+    console.log('distance to food', distance)
     //Add a weight that reduces the likelihood of targeting wall food
     if (!gs.board.food[i].x || !gs.board.food[i].y || gs.board.food[i].x === gs.board.width - 1 || gs.board.food[i].y === gs.board.height - 1) {
       distance += 10;
@@ -281,6 +298,7 @@ function findFood(gs) {
     return a.distance - b.distance;
   });
   //Return the closest
+  console.log("closest food is ", allTargets[0]);
   return allTargets[0];
 }
 
@@ -318,7 +336,7 @@ function chooseTarget(gs) {
   //     return findFood(gs);
   // } else 
   if (gs.board.snakes.length == 2) {
-    if (gs.you.health > 40) {
+    if (gs.you.health > 111) {
       return findTail(gs);
     } else {
       return findFood(gs);
