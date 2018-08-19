@@ -23,7 +23,7 @@ router.post('/end', (req, res) => {
 router.post('/start', function (req, res) {
   // console.log("Starter Request Object", req.body)
   const snakeInfo = {
-    color: '#FFD90F',
+    // color: '#FFD90F',
     // head_url: 'http://www.simpsonspark.com/images/persos/contributions/uter-22544.jpg',
     // head_type: 'smile',
     // tail_type: 'fat-rattle',
@@ -48,8 +48,13 @@ router.post('/move', function (req, res) {
   function setGrid(gs, grid) {
     //Mark my snake in grid
     for (let i = 1; i < gs.you.body.length -1; i++) {
-      console.log('my snake part', gs.you.body[i]);
+      // console.log('my snake part', gs.you.body[i]);
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
+    }
+    livingSnakes = getLivingSnakes(gs);
+    if (livingSnakes.length == 2 && isOddLength(gs) && gs.you.health > 40) {
+      let snakeLength = gs.you.body.length;
+      grid.setWalkableAt(gs.you.body[snakeLength].x, gs.you.body[snakeLength].y, false);
     }
     //Mark other snake heads
     const allSnakes = gs.board.snakes;
@@ -57,7 +62,7 @@ router.post('/move', function (req, res) {
       if (allSnakes[snake].id !== gs.you.id) {
         //Don't run into body
 
-        for (let j = 0; j < allSnakes[snake].body.length - 1; j++) {
+        for (let j = 0; j < allSnakes[snake].body.length; j++) {
           grid.setWalkableAt(allSnakes[snake].body[j].x, allSnakes[snake].body[j].y, false);
         }
         //Could we run into the head this turn
@@ -337,27 +342,35 @@ function getLivingSnakes(gs) {
   const allSnakes = gs.board.snakes;
   for (let snake of allSnakes) {
     if (snake.health > 0) {
+      console.log(snake.health, "snake's alive")
       livingSnakes.push(snake);
     }
   }
   return livingSnakes;
 }
 
+// Determine if the snake is of odd length
+function isOddLength(gs) {
+  let snakeLength = gs.you.body.length;
+  if (snakeLength % 2 == 0) {
+    return false; 
+  } else {
+    return true;
+  }
+}
+
 // Checks current health to switch between tail chasing and food chasing.
-function chooseTarget(gs) {
+function chooseTarget(gs, grid) {
   // Toggle to keep you as the longest snake
   // if (gs.you.length < getLongestLength(gs)){
   //     return findFood(gs);
   // } else 
   livingSnakes = getLivingSnakes(gs);
-  // console.log('number of snakes', livingSnakes.length)
-  if (livingSnakes.length == 2) {
-    if (gs.you.health > 40) {
-      console.log('finding my tail')
-      return findTail(gs);
-    } else {
-      return findFood(gs);
-    }
+  console.log('number of snakes', livingSnakes.length);
+  console.log('is odd', isOddLength(gs));
+  console.log('health', gs.you.health);
+  if (livingSnakes.length == 2 && isOddLength(gs) && gs.you.health > 40) {
+    return findTail(gs);
   } else {
     return findFood(gs);
   }
