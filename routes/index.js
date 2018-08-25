@@ -33,9 +33,10 @@ router.post('/start', function (req, res) {
 });
 
 router.post('/move', function (req, res) {
+  let findingTail = false;
   // console.log("Move Request Object", req.body)
   const gameState = req.body;
-
+// console.log("all the snakes \n\n", gameState.board.snakes)
   const myHead = {
     x: gameState.you.body[0].x,
     y: gameState.you.body[0].y
@@ -47,15 +48,17 @@ router.post('/move', function (req, res) {
   //Marks areas on the Grid where the snake can't pass into
   function setGrid(gs, grid) {
     //Mark my snake in grid
-    for (let i = 1; i < gs.you.body.length -1; i++) {
+    for (let i = 1; i < gs.you.body.length; i++) {
       // console.log('my snake part', gs.you.body[i]);
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
-    livingSnakes = getLivingSnakes(gs);
-    if (livingSnakes.length == 2 && isOddLength(gs) && gs.you.health > 40) {
-      let snakeLength = gs.you.body.length;
-      grid.setWalkableAt(gs.you.body[snakeLength].x, gs.you.body[snakeLength].y, false);
-    }
+    // livingSnakes = getLivingSnakes(gs);
+    // // if (livingSnakes.length == 2 && isOddLength(gs) && gs.you.health > 40) {
+    //   // if (isOddLength(gs) && gs.you.health > 40) {
+    //     console.log('adding tail')
+    //     let snakeLength = gs.you.body.length;
+    //   grid.setWalkableAt(gs.you.body[snakeLength-1].x, gs.you.body[snakeLength-1].y, false);
+    
     //Mark other snake heads
     const allSnakes = gs.board.snakes;
     for (let snake in allSnakes) {
@@ -93,7 +96,12 @@ router.post('/move', function (req, res) {
   setGrid(gameState, grid);
   const closestTarget = chooseTarget(gameState);
   console.log('head', myHead)
+  let snakeLength = gameState.you.body.length;
+  console.log('tail', gameState.you.body[snakeLength-1])
   console.log('current target', closestTarget)
+  if (findingTail) {
+    grid.setWalkableAt(gameState.you.body[snakeLength-1].x, gameState.you.body[snakeLength-1].y, true);
+  }
   const finder = new PF.AStarFinder;
   const path = finder.findPath(myHead.x, myHead.y, closestTarget.x, closestTarget.y, grid);
   console.log('next target', path[1])
@@ -318,6 +326,7 @@ function findTail(gs) {
     return findFood(gs);
   }
   let tailPosition = snakeBody[snakeLength - 1];
+  findingTail = true;
   return tailPosition;
 }
 
