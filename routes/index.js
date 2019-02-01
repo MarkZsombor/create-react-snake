@@ -20,6 +20,10 @@ router.post('/end', (req, res) => {
   return res.sendStatus(200);
 });
 
+router.post('/ping', (req, res) => {
+  return res.sendStatus(200);
+});
+
 router.post('/start', function (req, res) {
   // console.log("Starter Request Object", req.body)
   const snakeInfo = {
