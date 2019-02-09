@@ -52,7 +52,7 @@ router.post("/move", function(req, res) {
   //Marks areas on the Grid where the snake can't pass into
   function setGrid(gs, grid) {
     //Mark my snake in grid
-    for (let i = 1; i < gs.you.body.length; i++) {
+    for (let i = 1; i < gs.you.body.length - 1; i++) {
       // console.log('my snake part', gs.you.body[i]);
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
@@ -122,13 +122,13 @@ router.post("/move", function(req, res) {
   let snakeLength = gameState.you.body.length;
   console.log("tail", gameState.you.body[snakeLength - 1]);
   console.log("current target", closestTarget);
-  if (findingTail) {
-    grid.setWalkableAt(
-      gameState.you.body[snakeLength - 1].x,
-      gameState.you.body[snakeLength - 1].y,
-      true
-    );
-  }
+  // if (findingTail) {
+  //   grid.setWalkableAt(
+  //     gameState.you.body[snakeLength - 1].x,
+  //     gameState.you.body[snakeLength - 1].y,
+  //     true
+  //   );
+  // }
   const finder = new PF.AStarFinder();
   const path = finder.findPath(
     myHead.x,
@@ -137,7 +137,7 @@ router.post("/move", function(req, res) {
     closestTarget.y,
     grid
   );
-  console.log(findingTail, path.length)
+  console.log(findingTail, path.length);
   console.log("next target", path[1]);
   const snakeResponse = {
     name: gs.you.name
@@ -434,7 +434,7 @@ function chooseTarget(gs, grid) {
   livingSnakes = getLivingSnakes(gs);
   console.log("number of snakes", livingSnakes.length);
   console.log("health", gs.you.health);
-  console.log("food", gs.board.food.length)
+  console.log("food", gs.board.food.length);
   if (
     (livingSnakes.length == 2 && gs.you.health > 40) ||
     !gs.board.food.length
