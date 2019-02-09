@@ -137,6 +137,7 @@ router.post("/move", function(req, res) {
     closestTarget.y,
     grid
   );
+  console.log(findingTail, path.length)
   console.log("next target", path[1]);
   const snakeResponse = {
     name: gs.you.name
