@@ -140,7 +140,7 @@ router.post("/move", function(req, res) {
   console.log(findingTail, path.length);
   console.log("next target", path[1]);
   const snakeResponse = {
-    name: gs.you.name
+    name: gameState.you.name
   };
 
   // if no path exists or a bigger snake can move into the same space choose a safe direction
@@ -148,7 +148,7 @@ router.post("/move", function(req, res) {
     !path.length ||
     (path.length === 2 && !grid.nodes[path[0][1]][path[0][0]].walkable)
   ) {
-    // console.log('NO PATH')
+    console.log("NO PATH");
     const possibleMoves = [
       {
         direction: "right",
@@ -288,6 +288,7 @@ router.post("/move", function(req, res) {
     console.log(snakeResponse);
     return res.json(snakeResponse);
   } else {
+    console.log("about to call setMove");
     snakeResponse.move = setMove(path, myHead);
     // snakeResponse.taunt = taunts[getTaunt(gameState)];
     console.log(snakeResponse);
@@ -302,17 +303,21 @@ module.exports = router;
 
 //Convert the calculated path coords to a direction of movement
 function setMove(path, head) {
+  console.log("in setMove", path[0]);
+  let move = "";
   if (path[1][0] === head.x && path[1][1] === head.y + 1) {
-    return "down";
+    move = "down";
   } else if (path[1][0] === head.x && path[1][1] === head.y - 1) {
-    return "up";
+    move = "up";
   } else if (path[1][0] === head.x + 1 && path[1][1] === head.y) {
-    return "right";
+    move = "right";
   } else if (path[1][0] === head.x - 1 && path[1][1] === head.y) {
-    return "left";
+    move = "left";
   } else {
-    return "down";
+    move = "down";
   }
+  console.log("move", move);
+  return move;
 }
 
 // Make Uter say funny things for hilarity
