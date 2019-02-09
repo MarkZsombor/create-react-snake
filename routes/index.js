@@ -138,7 +138,9 @@ router.post("/move", function(req, res) {
     grid
   );
   console.log("next target", path[1]);
-  const snakeResponse = {};
+  const snakeResponse = {
+    name: gs.you.name
+  };
 
   // if no path exists or a bigger snake can move into the same space choose a safe direction
   if (
@@ -401,15 +403,15 @@ function getLongestLength(gs) {
 
 //creates an array that includes only living snakes
 function getLivingSnakes(gs) {
-  const livingSnakes = [];
-  const allSnakes = gs.board.snakes;
-  for (let snake of allSnakes) {
-    if (snake.health > 0) {
-      console.log(snake.health, "snake's alive");
-      livingSnakes.push(snake);
-    }
-  }
-  return gs.board.snakes.length;
+  // const livingSnakes = [];
+  // const allSnakes = gs.board.snakes;
+  // for (let snake of allSnakes) {
+  //   if (snake.health > 0) {
+  //     console.log(snake.health, "snake's alive");
+  //     livingSnakes.push(snake);
+  //   }
+  // }
+  return gs.board.snakes;
 }
 
 // Determine if the snake is of odd length
@@ -430,8 +432,8 @@ function chooseTarget(gs, grid) {
   // } else
   livingSnakes = getLivingSnakes(gs);
   console.log("number of snakes", livingSnakes.length);
-  console.log("is odd", isOddLength(gs));
   console.log("health", gs.you.health);
+  console.log("food", gs.board.food.length)
   if (
     (livingSnakes.length == 2 && gs.you.health > 40) ||
     !gs.board.food.length
