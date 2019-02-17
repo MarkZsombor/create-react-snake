@@ -16,7 +16,7 @@ router.post("/ping", (req, res) => {
 
 router.post("/start", function(req, res) {
   const snakeInfo = {
-    color: "#FFD90F"
+    color: "#61DAFB"
   };
   return res.json(snakeInfo);
 });
@@ -29,19 +29,21 @@ router.post("/move", function(req, res) {
     y: you.body[0].y
   };
 
-  const grid = new PF.Grid(board.width, board.height);
-
   //Marks areas on the Grid where the snake can't pass into
-  function setGrid(gs, grid) {
+  function setGrid(gameState, grid) {
     //Mark my snake in grid
-    for (let i = 1; i < gs.you.body.length - 1; i++) {
-      grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
+    for (let i = 1; i < gameState.you.body.length - 1; i++) {
+      grid.setWalkableAt(
+        gameState.you.body[i].x,
+        gameState.you.body[i].y,
+        false
+      );
     }
 
     //Mark other snake heads
-    const allSnakes = gs.board.snakes;
+    const allSnakes = gameState.board.snakes;
     for (let snake in allSnakes) {
-      if (allSnakes[snake].id !== gs.you.id) {
+      if (allSnakes[snake].id !== gameState.you.id) {
         //Don't run into body
 
         for (let j = 0; j < allSnakes[snake].body.length; j++) {
@@ -60,9 +62,9 @@ router.post("/move", function(req, res) {
           ) === 2
         ) {
           //Decide on head collision depending on size
-          if (gs.you.body.length <= allSnakes[snake].body.length) {
+          if (gameState.you.body.length <= allSnakes[snake].body.length) {
             //Pathfinding will throw an error if we try to set a space outside the board
-            if (allSnakes[snake].body[0].x + 1 < gs.board.width) {
+            if (allSnakes[snake].body[0].x + 1 < gameState.board.width) {
               grid.setWalkableAt(
                 allSnakes[snake].body[0].x + 1,
                 allSnakes[snake].body[0].y,
@@ -76,7 +78,7 @@ router.post("/move", function(req, res) {
                 false
               );
             }
-            if (allSnakes[snake].body[0].y + 1 < gs.board.height) {
+            if (allSnakes[snake].body[0].y + 1 < gameState.board.height) {
               grid.setWalkableAt(
                 allSnakes[snake].body[0].x,
                 allSnakes[snake].body[0].y + 1,
@@ -96,28 +98,31 @@ router.post("/move", function(req, res) {
     }
   }
 
-  // Set the board, choose the target and generate a path
-  setGrid(gameState, grid);
-  const closestTarget = chooseTarget(gameState);
-  let snakeLength = you.body.length;
+  function generatePath(gameState, target) {
+    const { you, board } = gameState;
+    const myHead = {
+      x: you.body[0].x,
+      y: you.body[0].y
+    };
+    console.log("head", myHead);
+    console.log("target", target);
+    const grid = new PF.Grid(board.width, board.height);
 
-  const finder = new PF.AStarFinder();
-  const path = finder.findPath(
-    myHead.x,
-    myHead.y,
-    closestTarget.x,
-    closestTarget.y,
-    grid
-  );
+    // Set the board, choose the target and generate a path
+    setGrid(gameState, grid);
+    const finder = new PF.AStarFinder();
 
+    const path = finder.findPath(myHead.x, myHead.y, target.x, target.y, grid);
+    return path;
+  }
+
+  const path = generatePath(gameState, chooseTarget(gameState));
+  console.log("path length", path.length);
   const snakeResponse = {};
 
   // if no path exists or a bigger snake can move into the same space choose a safe direction
-  if (
-    !path.length ||
-    (path.length === 2 && !grid.nodes[path[0][1]][path[0][0]].walkable)
-  ) {
-    // console.log("NO PATH");
+  if (!path.length) {
+    console.log("NO PATH");
     const possibleMoves = [
       {
         direction: "right",
@@ -146,73 +151,85 @@ router.post("/move", function(req, res) {
     ];
 
     // Stop the snake from running into itself
-    function checkSelf(gs, pm) {
-      for (let i = 0; i < gs.you.body.length - 1; i++) {
-        for (let move in pm) {
+    function checkSelf(gameState, possibleMoves) {
+      console.log("checking self");
+      const { body } = gameState.you;
+      for (let i = 0; i < body.length - 1; i++) {
+        for (let move in possibleMoves) {
           if (
-            pm[move].x === gs.you.body[i].x &&
-            pm[move].y === gs.you.body[i].y
+            possibleMoves[move].x === body[i].x &&
+            possibleMoves[move].y === body[i].y
           ) {
-            pm[move].valid = false;
+            possibleMoves[move].valid = false;
           }
         }
       }
     }
 
     //Stop from running into wall
-    function checkEdges(gs, pm) {
-      for (let move in pm) {
-        if (pm[move].x < 0 || pm[move].x >= gs.board.width) {
-          pm[move].valid = false;
+    function checkEdges(gameState, possibleMoves) {
+      console.log("checking edges");
+
+      for (let move in possibleMoves) {
+        if (
+          possibleMoves[move].x < 0 ||
+          possibleMoves[move].x >= gameState.board.width
+        ) {
+          possibleMoves[move].valid = false;
         }
-        if (pm[move].y < 0 || pm[move].y >= gs.board.height) {
-          pm[move].valid = false;
+        if (
+          possibleMoves[move].y < 0 ||
+          possibleMoves[move].y >= gameState.board.height
+        ) {
+          possibleMoves[move].valid = false;
         }
       }
     }
 
     //check for other snakes
-    function checkSnakes(gs, pm) {
-      const allSnakes = getLivingSnakes(gs);
-      for (let snake in allSnakes) {
-        if (allSnakes[snake].id !== gs.you.id) {
+    function checkSnakes(gameState, possibleMoves) {
+      console.log("checking snakes");
+
+      const { snakes } = gameState.board;
+      for (let snake in snakes) {
+        if (snakes[snake].id !== gameState.you.id) {
           //Don't run into body
-          for (let i = 0; i < allSnakes[snake].body.length - 1; i++) {
-            for (let move in pm) {
+          for (let i = 0; i < snakes[snake].body.length - 1; i++) {
+            for (let move in possibleMoves) {
               if (
-                pm[move].x === allSnakes[snake].body[i].x &&
-                pm[move].y === allSnakes[snake].body[i].y
+                possibleMoves[move].x === snakes[snake].body[i].x &&
+                possibleMoves[move].y === snakes[snake].body[i].y
               ) {
-                pm[move].valid = false;
+                possibleMoves[move].valid = false;
               }
             }
           }
           //Decide on head collision depending on size
-          if (allSnakes[snake].body.length >= gs.you.body.length) {
-            for (let move in pm) {
+          if (snakes[snake].body.length >= gameState.you.body.length) {
+            for (let move in possibleMoves) {
               if (
-                pm[move].x === allSnakes[snake].body[0].x + 1 &&
-                pm[move].y === allSnakes[snake].body[0].y
+                possibleMoves[move].x === snakes[snake].body[0].x + 1 &&
+                possibleMoves[move].y === snakes[snake].body[0].y
               ) {
-                pm[move].valid = false;
+                possibleMoves[move].valid = false;
               }
               if (
-                pm[move].x === allSnakes[snake].body[0].x - 1 &&
-                pm[move].y === allSnakes[snake].body[0].y
+                possibleMoves[move].x === snakes[snake].body[0].x - 1 &&
+                possibleMoves[move].y === snakes[snake].body[0].y
               ) {
-                pm[move].valid = false;
+                possibleMoves[move].valid = false;
               }
               if (
-                pm[move].x === allSnakes[snake].body[0].x &&
-                pm[move].y === allSnakes[snake].body[0].y + 1
+                possibleMoves[move].x === snakes[snake].body[0].x &&
+                possibleMoves[move].y === snakes[snake].body[0].y + 1
               ) {
-                pm[move].valid = false;
+                possibleMoves[move].valid = false;
               }
               if (
-                pm[move].x === allSnakes[snake].body[0].x &&
-                pm[move].y === allSnakes[snake].body[0].y - 1
+                possibleMoves[move].x === snakes[snake].body[0].x &&
+                possibleMoves[move].y === snakes[snake].body[0].y - 1
               ) {
-                pm[move].valid = false;
+                possibleMoves[move].valid = false;
               }
             }
           }
@@ -223,6 +240,7 @@ router.post("/move", function(req, res) {
     checkSelf(gameState, possibleMoves);
     checkEdges(gameState, possibleMoves);
     checkSnakes(gameState, possibleMoves);
+    console.log("possibleMoves", possibleMoves);
 
     const validMoves = [];
     for (let i in possibleMoves) {
@@ -230,7 +248,6 @@ router.post("/move", function(req, res) {
         validMoves.push(possibleMoves[i]);
       }
     }
-
     // if no spaces are safe, this will allow to move into spaces bigger snakes can allow move into
     if (!validMoves.length) {
       //Reset possibleMoves
@@ -290,24 +307,28 @@ function getDistance(a, b, head) {
 }
 
 //return the closest food item
-function findFood(gs) {
-  let myHead = gs.you.body[0];
+function findFood(gameState) {
+  let myHead = gameState.you.body[0];
   const allTargets = [];
-  for (let i in gs.board.food) {
-    let distance = getDistance(gs.board.food[i].x, gs.board.food[i].y, myHead);
+  for (let i in gameState.board.food) {
+    let distance = getDistance(
+      gameState.board.food[i].x,
+      gameState.board.food[i].y,
+      myHead
+    );
     //Add a weight that reduces the likelihood of targeting wall food
     if (
-      !gs.board.food[i].x ||
-      !gs.board.food[i].y ||
-      gs.board.food[i].x === gs.board.width - 1 ||
-      gs.board.food[i].y === gs.board.height - 1
+      !gameState.board.food[i].x ||
+      !gameState.board.food[i].y ||
+      gameState.board.food[i].x === gameState.board.width - 1 ||
+      gameState.board.food[i].y === gameState.board.height - 1
     ) {
       distance += 10;
     }
 
     allTargets.push({
-      x: gs.board.food[i].x,
-      y: gs.board.food[i].y,
+      x: gameState.board.food[i].x,
+      y: gameState.board.food[i].y,
       distance: distance
     });
   }
@@ -320,22 +341,22 @@ function findFood(gs) {
 }
 
 // Finds your own tail and returns its coordinates for targeting.
-function findTail(gs) {
-  let snakeBody = gs.you.body;
+function findTail(gameState) {
+  let snakeBody = gameState.you.body;
   let snakeLength = snakeBody.length;
   if (snakeLength === 1) {
-    return findFood(gs);
+    return findFood(gameState);
   }
   let tailPosition = snakeBody[snakeLength - 1];
   return tailPosition;
 }
 
 //Determine the longest snake
-function getLongestLength(gs) {
-  const allSnakes = gs.board.snakes;
+function getLongestLength(gameState) {
+  const allSnakes = gameState.board.snakes;
   let longestSnake = 0;
   for (let snake in allSnakes) {
-    if (allSnakes[snake].id !== gs.you.id) {
+    if (allSnakes[snake].id !== gameState.you.id) {
       if (allSnakes[snake].body.length > longestSnake) {
         longestSnake = allSnakes[snake].body.length;
       }
@@ -345,11 +366,14 @@ function getLongestLength(gs) {
 }
 
 // Checks current health to switch between tail chasing and food chasing.
-function chooseTarget(gs, grid) {
-  const { snakes } = gs.board;
-  if ((snakes.length == 2 && gs.you.health > 60) || !gs.board.food.length) {
-    return findTail(gs);
+function chooseTarget(gameState, grid) {
+  const { snakes } = gameState.board;
+  if (
+    (snakes.length == 2 && gameState.you.health > 60) ||
+    !gameState.board.food.length
+  ) {
+    return findTail(gameState);
   } else {
-    return findFood(gs);
+    return findFood(gameState);
   }
 }
