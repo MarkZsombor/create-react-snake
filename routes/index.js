@@ -6,16 +6,6 @@ const PF = require("pathfinding");
 
 app.use(bodyParser.json());
 
-const taunts = [
-  "Don't make me run, I'm full of Chocolate!",
-  "I don't deserve this!",
-  "Oh guten tag.",
-  "I also have a bag of marzipan JoyJoys!",
-  "Would you like a lick of my flavor wax?",
-  "I begged you to look at mine first!"
-];
-
-//Johnnie's contribution
 router.post("/end", (req, res) => {
   return res.sendStatus(200);
 });
@@ -25,35 +15,26 @@ router.post("/ping", (req, res) => {
 });
 
 router.post("/start", function(req, res) {
-  // console.log("Starter Request Object", req.body)
   const snakeInfo = {
-    // color: '#FFD90F',
-    // head_url: 'http://www.simpsonspark.com/images/persos/contributions/uter-22544.jpg',
-    // head_type: 'smile',
-    // tail_type: 'fat-rattle',
-    // taunt: taunts[0],
+    color: "#FFD90F"
   };
   return res.json(snakeInfo);
 });
 
 router.post("/move", function(req, res) {
-  let findingTail = false;
-  // console.log("Move Request Object", req.body)
   const gameState = req.body;
-  // console.log("all the snakes \n\n", gameState.board.snakes)
+  const { you, board } = req.body;
   const myHead = {
-    x: gameState.you.body[0].x,
-    y: gameState.you.body[0].y
+    x: you.body[0].x,
+    y: you.body[0].y
   };
-  // console.log("myHead", myHead);
-  //Create an empty board
-  const grid = new PF.Grid(gameState.board.width, gameState.board.height);
+
+  const grid = new PF.Grid(board.width, board.height);
 
   //Marks areas on the Grid where the snake can't pass into
   function setGrid(gs, grid) {
     //Mark my snake in grid
     for (let i = 1; i < gs.you.body.length - 1; i++) {
-      // console.log('my snake part', gs.you.body[i]);
       grid.setWalkableAt(gs.you.body[i].x, gs.you.body[i].y, false);
     }
 
@@ -118,17 +99,8 @@ router.post("/move", function(req, res) {
   // Set the board, choose the target and generate a path
   setGrid(gameState, grid);
   const closestTarget = chooseTarget(gameState);
-  console.log("head", myHead);
-  let snakeLength = gameState.you.body.length;
-  console.log("tail", gameState.you.body[snakeLength - 1]);
-  console.log("current target", closestTarget);
-  // if (findingTail) {
-  //   grid.setWalkableAt(
-  //     gameState.you.body[snakeLength - 1].x,
-  //     gameState.you.body[snakeLength - 1].y,
-  //     true
-  //   );
-  // }
+  let snakeLength = you.body.length;
+
   const finder = new PF.AStarFinder();
   const path = finder.findPath(
     myHead.x,
@@ -137,18 +109,15 @@ router.post("/move", function(req, res) {
     closestTarget.y,
     grid
   );
-  console.log(findingTail, path.length);
-  console.log("next target", path[1]);
-  const snakeResponse = {
-    name: gameState.you.name
-  };
+
+  const snakeResponse = {};
 
   // if no path exists or a bigger snake can move into the same space choose a safe direction
   if (
     !path.length ||
     (path.length === 2 && !grid.nodes[path[0][1]][path[0][0]].walkable)
   ) {
-    console.log("NO PATH");
+    // console.log("NO PATH");
     const possibleMoves = [
       {
         direction: "right",
@@ -264,15 +233,13 @@ router.post("/move", function(req, res) {
 
     // if no spaces are safe, this will allow to move into spaces bigger snakes can allow move into
     if (!validMoves.length) {
-      // console.log('NO PATH, NO OPEN MOVES');
-
       //Reset possibleMoves
       for (let i in possibleMoves) {
         possibleMoves[i].valid = true;
       }
 
       //Recheck possibleMoves but ignoring larger snakes
-      gameState.you.body.length += 100;
+      you.body.length += 100;
       checkSelf(gameState, possibleMoves);
       checkEdges(gameState, possibleMoves);
       checkSnakes(gameState, possibleMoves);
@@ -284,13 +251,10 @@ router.post("/move", function(req, res) {
     }
 
     snakeResponse.move = validMoves[0].direction;
-    // snakeResponse.taunt = taunts[1];
     console.log(snakeResponse);
     return res.json(snakeResponse);
   } else {
-    console.log("about to call setMove");
     snakeResponse.move = setMove(path, myHead);
-    // snakeResponse.taunt = taunts[getTaunt(gameState)];
     console.log(snakeResponse);
 
     return res.json(snakeResponse);
@@ -303,7 +267,6 @@ module.exports = router;
 
 //Convert the calculated path coords to a direction of movement
 function setMove(path, head) {
-  console.log("in setMove", path[0]);
   let move = "";
   if (path[1][0] === head.x && path[1][1] === head.y + 1) {
     move = "down";
@@ -316,25 +279,7 @@ function setMove(path, head) {
   } else {
     move = "down";
   }
-  console.log("move", move);
   return move;
-}
-
-// Make Uter say funny things for hilarity
-function getTaunt(gs) {
-  let tauntIndex = 0;
-  if (gs.you.health > 90) {
-    tauntIndex = 0;
-  } else if (gs.you.health < 30) {
-    tauntIndex = 5;
-  } else if (gs.turn < 100) {
-    tauntIndex = 4;
-  } else if (gs.turn < 150) {
-    tauntIndex = 2;
-  } else {
-    tauntIndex = 3;
-  }
-  return tauntIndex;
 }
 
 //Determines the distance from the snakes head to something
@@ -347,15 +292,9 @@ function getDistance(a, b, head) {
 //return the closest food item
 function findFood(gs) {
   let myHead = gs.you.body[0];
-  // console.log("looking for food")
-  // console.log('first food in array', gs.board.food[0].x, gs.board.food[0].y)
   const allTargets = [];
   for (let i in gs.board.food) {
-    // console.log('inside the food for loop', i)
-    // console.log(gs.board.food[i].x, gs.board.food[i].y)
-    // console.log(myHead)
     let distance = getDistance(gs.board.food[i].x, gs.board.food[i].y, myHead);
-    // console.log('distance to food', distance)
     //Add a weight that reduces the likelihood of targeting wall food
     if (
       !gs.board.food[i].x ||
@@ -377,7 +316,6 @@ function findFood(gs) {
     return a.distance - b.distance;
   });
   //Return the closest
-  // console.log("closest food is ", allTargets[0]);
   return allTargets[0];
 }
 
@@ -389,7 +327,6 @@ function findTail(gs) {
     return findFood(gs);
   }
   let tailPosition = snakeBody[snakeLength - 1];
-  findingTail = true;
   return tailPosition;
 }
 
@@ -407,43 +344,10 @@ function getLongestLength(gs) {
   return longestSnake;
 }
 
-//creates an array that includes only living snakes
-function getLivingSnakes(gs) {
-  // const livingSnakes = [];
-  // const allSnakes = gs.board.snakes;
-  // for (let snake of allSnakes) {
-  //   if (snake.health > 0) {
-  //     console.log(snake.health, "snake's alive");
-  //     livingSnakes.push(snake);
-  //   }
-  // }
-  return gs.board.snakes;
-}
-
-// Determine if the snake is of odd length
-function isOddLength(gs) {
-  let snakeLength = gs.you.body.length;
-  if (snakeLength % 2 == 0) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
 // Checks current health to switch between tail chasing and food chasing.
 function chooseTarget(gs, grid) {
-  // Toggle to keep you as the longest snake
-  // if (gs.you.length < getLongestLength(gs)){
-  //     return findFood(gs);
-  // } else
-  livingSnakes = getLivingSnakes(gs);
-  console.log("number of snakes", livingSnakes.length);
-  console.log("health", gs.you.health);
-  console.log("food", gs.board.food.length);
-  if (
-    (livingSnakes.length == 2 && gs.you.health > 40) ||
-    !gs.board.food.length
-  ) {
+  const { snakes } = gs.board;
+  if ((snakes.length == 2 && gs.you.health > 60) || !gs.board.food.length) {
     return findTail(gs);
   } else {
     return findFood(gs);
