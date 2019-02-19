@@ -45,18 +45,18 @@ router.post("/move", function(req, res) {
     const gridBackup = grid.clone();
     let path = generatePath(gameState, grid, chooseTarget(gameState));
     if (path.length) {
-      console.log("initial path", path.length);
       validPath = validatePath(gameState, path);
     }
     if (!validPath) {
-      const newGrid = setGrid(req.body)
-      console.log("switch to tail");
+      const newGrid = setGrid(req.body);
       path = generatePath(gameState, newGrid, findTail(gameState));
+      if (path.length) {
+        validPath = true;
+      }
     }
 
     // if no path exists choose a safe direction
     if (!path.length || !validPath) {
-      // console.log(JSON.stringify(gameState));
       snakeResponse.move = noPathFallback(gameState);
       console.log(snakeResponse);
       return res.json(snakeResponse);

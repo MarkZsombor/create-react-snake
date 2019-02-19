@@ -68,7 +68,6 @@ function findTail(gameState) {
     return findFood(gameState);
   }
   let tailPosition = body[snakeLength - 1];
-  console.log("tail", tailPosition);
   return { target: tailPosition, type: "tail" };
 }
 
@@ -76,7 +75,8 @@ function findTail(gameState) {
 function chooseTarget(gameState, grid) {
   const { snakes } = gameState.board;
   if (
-    (snakes.length == 2 && gameState.you.health > 60) ||
+    // (snakes.length == 2 && gameState.you.health > 60) ||
+    // !gameState.board.food.length
     !gameState.board.food.length
   ) {
     console.log("get tail");
@@ -186,7 +186,6 @@ function setGrid(gameState, targetType) {
 
   //Mark my snake in grid
   for (let i = 1; i < body.length - 1; i++) {
-    console.log(body[i].x, body[i].y, false);
     grid.setWalkableAt(body[i].x, body[i].y, false);
   }
 
@@ -206,7 +205,6 @@ function setGrid(gameState, targetType) {
       //Don't run into body
 
       for (let j = 0; j < snake.body.length; j++) {
-        console.log(snake.body[j].x, snake.body[j].y, false);
         grid.setWalkableAt(snake.body[j].x, snake.body[j].y, false);
       }
       //Could we run into the head this turn
@@ -215,26 +213,21 @@ function setGrid(gameState, targetType) {
         if (body.length <= snake.body.length) {
           //Pathfinding will throw an error if we try to set a space outside the board
           if (snake.body[0].x + 1 < board.width) {
-            console.log(snake.body[0].x + 1, snake.body[0].y, false);
             grid.setWalkableAt(snake.body[0].x + 1, snake.body[0].y, false);
           }
           if (snake.body[0].x - 1 >= 0) {
-            console.log(snake.body[0].x - 1, snake.body[0].y, false);
             grid.setWalkableAt(snake.body[0].x - 1, snake.body[0].y, false);
           }
           if (snake.body[0].y + 1 < board.height) {
-            console.log(snake.body[0].x, snake.body[0].y + 1, false);
             grid.setWalkableAt(snake.body[0].x, snake.body[0].y + 1, false);
           }
           if (snake.body[0].y - 1 >= 0) {
-            console.log(snake.body[0].x, snake.body[0].y - 1, false);
             grid.setWalkableAt(snake.body[0].x, snake.body[0].y - 1, false);
           }
         }
       }
     }
   }
-  console.log(JSON.stringify(grid));
 
   return grid;
 }
@@ -263,7 +256,6 @@ function noPathFallback(gameState) {
   console.log("NO PATH");
   const { you, board } = gameState;
   const myHead = you.body[0];
-  console.log(myHead);
   let possibleMoves = [
     {
       direction: "right",
