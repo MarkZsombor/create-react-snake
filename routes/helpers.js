@@ -43,7 +43,7 @@ function findFood(gameState) {
       gameState.board.food[i].x === gameState.board.width - 1 ||
       gameState.board.food[i].y === gameState.board.height - 1
     ) {
-      distance += 10;
+      distance += 5;
     }
 
     allTargets.push({
@@ -79,10 +79,8 @@ function chooseTarget(gameState, grid) {
     // !gameState.board.food.length
     !gameState.board.food.length
   ) {
-    console.log("get tail");
     return findTail(gameState);
   } else {
-    console.log("get food");
     return findFood(gameState);
   }
 }
@@ -149,6 +147,20 @@ function checkSnakes(gameState, possibleMoves) {
   return possibleMoves;
 }
 
+function checkAllSnakes(gameState, possibleMoves, dangerZone) {
+  for (let move of possibleMoves) {
+    if (move.valid) {
+      for (let segment of dangerZone) {
+        if (move.x == segment.x && move.y == segment.y) {
+          move.valid = false;
+          console.log("BAD");
+        }
+      }
+    }
+  }
+  return possibleMoves;
+}
+
 function checkOtherHeads(gameState, possibleMoves) {
   const { snakes } = gameState.board;
   const { you } = gameState;
@@ -176,6 +188,50 @@ function checkOtherHeads(gameState, possibleMoves) {
   return possibleMoves;
 }
 
+function isInDangerZone(zone, dangerZone) {
+  dangerZone = dangerZone.filter(
+    segment => segment.x == zone.x && segment.y == zone.y
+  );
+  return dangerZone.length > 0;
+}
+
+function isDeadEnd(gameState, dangerZone) {
+  const myHead = gameState.you.body[0];
+  const { height, width } = gameState.board;
+  const safe = false;
+  const edgeZones = [
+    [myHead.x + 1, myHead.y],
+    [myHead.x - 1, myHead.y],
+    [myHead.x, myHead.y + 1],
+    [myHead.x, myHead.y - 1]
+  ];
+
+  for (let zone of edgeZones) {
+    if (
+      zone[0] >= width ||
+      zone[0] < 0 ||
+      zone[1] >= height ||
+      zone[1] < 0 ||
+      isInDangerZone(zone, dangerZone)
+    ) {
+      return true;
+    }
+  }
+  return safe;
+}
+
+function checkDeadEnd(gameState, possibleMoves, dangerZone) {
+  dangerZone = dangerZone.map(segment => [segment.x, segment.y]);
+  for (let move of possibleMoves) {
+    if (move.valid) {
+      if (isDeadEnd(gameState, dangerZone)) {
+        move.valid = false;
+      }
+    }
+  }
+  return possibleMoves;
+}
+
 //Marks areas on the Grid where the snake can't pass into
 function setGrid(gameState, targetType) {
   const { you, board } = gameState;
@@ -191,10 +247,12 @@ function setGrid(gameState, targetType) {
 
   //Don't mark my tail -1 if just ate but won't collide
   if (
-    targetType == "tail" ||
-    (body[body.length - 1].x == body[body.length - 2].x &&
-      body[body.length - 1].y == body[body.length - 2].y &&
-      getDistance(body[body.length - 1].x, body[body.length - 1].y, myHead) > 1)
+    body.length > 1 &&
+    (targetType == "tail" ||
+      (body[body.length - 1].x == body[body.length - 2].x &&
+        body[body.length - 1].y == body[body.length - 2].y &&
+        getDistance(body[body.length - 1].x, body[body.length - 1].y, myHead) >
+          1))
   ) {
     grid.setWalkableAt(body[body.length - 1].x, body[body.length - 1].y, true);
   }
@@ -249,6 +307,7 @@ function generatePath(gameState, grid, target) {
     return path;
   } catch (e) {
     console.error(e);
+    return [];
   }
 }
 
@@ -256,6 +315,8 @@ function noPathFallback(gameState) {
   console.log("NO PATH");
   const { you, board } = gameState;
   const myHead = you.body[0];
+  const dangerZone = flatBoard(gameState);
+
   let possibleMoves = [
     {
       direction: "right",
@@ -282,11 +343,10 @@ function noPathFallback(gameState) {
       valid: true
     }
   ];
-
-  possibleMoves = checkSelf(gameState, possibleMoves);
+  possibleMoves = checkAllSnakes(gameState, possibleMoves, dangerZone);
   possibleMoves = checkEdges(gameState, possibleMoves);
-  possibleMoves = checkSnakes(gameState, possibleMoves);
   possibleMoves = checkOtherHeads(gameState, possibleMoves);
+  possibleMoves = checkDeadEnd(gameState, possibleMoves, dangerZone);
 
   let validMoves = possibleMoves.filter(move => move.valid);
   // if no spaces are safe, this will allow to move into spaces bigger snakes can allow move into
@@ -300,6 +360,8 @@ function noPathFallback(gameState) {
     possibleMoves = checkSelf(gameState, possibleMoves);
     possibleMoves = checkEdges(gameState, possibleMoves);
     possibleMoves = checkSnakes(gameState, possibleMoves);
+    possibleMoves = checkDeadEnd(gameState, possibleMoves, dangerZone);
+
     validMoves = possibleMoves.filter(move => move.valid);
   }
   const random = Math.floor(Math.random() * validMoves.length);
@@ -328,6 +390,11 @@ function validatePath(gameState, path) {
   }
 }
 
+function flatBoard(gameState) {
+  const { snakes } = gameState.board;
+  return snakes.map(snake => snake.body.slice(0, -1)).flat();
+}
+
 module.exports = {
   generatePath,
   checkOtherHeads,
@@ -341,5 +408,6 @@ module.exports = {
   setMove,
   noPathFallback,
   validatePath,
-  setGrid
+  setGrid,
+  flatBoard
 };

@@ -6,10 +6,6 @@ const PF = require("pathfinding");
 const {
   generatePath,
   chooseTarget,
-  checkOtherHeads,
-  checkSnakes,
-  checkEdges,
-  checkSelf,
   setMove,
   noPathFallback,
   findTail,
