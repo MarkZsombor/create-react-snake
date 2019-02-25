@@ -42,15 +42,21 @@ router.post("/move", function(req, res) {
     let path = generatePath(gameState, grid, chooseTarget(gameState));
     if (path.length) {
       validPath = validatePath(gameState, path);
+    } else {
+      validPath = false;
     }
+    console.log("path", path);
+    console.log("validPath", validPath);
+
     if (!validPath) {
       const newGrid = setGrid(req.body);
       path = generatePath(gameState, newGrid, findTail(gameState));
+      console.log("path2", path);
+
       if (path.length) {
         validPath = true;
       }
     }
-
     // if no path exists choose a safe direction
     if (!path.length || !validPath) {
       snakeResponse.move = noPathFallback(gameState);

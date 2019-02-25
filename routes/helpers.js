@@ -116,10 +116,14 @@ function checkSelf(gameState, possibleMoves) {
 function checkEdges(gameState, possibleMoves) {
   for (let move of possibleMoves) {
     if (move.x < 0 || move.x >= gameState.board.width) {
+      console.log("bad width");
       move.valid = false;
+      console.log(move);
     }
     if (move.y < 0 || move.y >= gameState.board.height) {
+      console.log("bad height");
       move.valid = false;
+      console.log(move);
     }
   }
   return possibleMoves;
@@ -153,6 +157,8 @@ function checkAllSnakes(gameState, possibleMoves, dangerZone) {
       for (let segment of dangerZone) {
         if (move.x == segment.x && move.y == segment.y) {
           move.valid = false;
+          console.log("blocked by snake");
+          console.log(move);
         }
       }
     }
@@ -191,6 +197,7 @@ function isInDangerZone(zone, dangerZone) {
   dangerZone = dangerZone.filter(
     segment => segment.x == zone.x && segment.y == zone.y
   );
+  console.log(dangerZone.length);
   return dangerZone.length == 1;
 }
 
@@ -228,6 +235,8 @@ function checkDeadEnd(gameState, possibleMoves, dangerZone) {
     if (move.valid) {
       if (isDeadEnd(gameState, dangerZone, move)) {
         move.valid = false;
+        console.log("deadend");
+        console.log(move);
       }
     }
   }
@@ -386,9 +395,11 @@ function validatePath(gameState, path) {
 
   try {
     const newPath = generatePath(newGameState, grid, findTail(newGameState));
+    console.log("newPath", newPath.length);
     return newPath.length;
   } catch (e) {
-    return false;
+    console.log("validate path failed");
+    return 0;
   }
 }
 
