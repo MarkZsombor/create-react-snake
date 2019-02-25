@@ -29,6 +29,7 @@ function getDistance(a, b, head) {
 //return the closest food item
 function findFood(gameState) {
   const myHead = gameState.you.body[0];
+  const { health } = gameState.you;
   const allTargets = [];
   for (let i in gameState.board.food) {
     let distance = getDistance(
@@ -43,7 +44,11 @@ function findFood(gameState) {
       gameState.board.food[i].x === gameState.board.width - 1 ||
       gameState.board.food[i].y === gameState.board.height - 1
     ) {
-      distance += 5;
+      if (health > 90) {
+        distance += 10;
+      } else if (health > 40) {
+        distance += 5;
+      }
     }
 
     allTargets.push({
@@ -223,7 +228,7 @@ function isDeadEnd(gameState, dangerZone, move) {
       return true;
     }
   });
-  
+
   if (edgeZones.length == 0) {
     blocked = true;
   }
