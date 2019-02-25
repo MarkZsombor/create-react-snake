@@ -74,11 +74,10 @@ function findTail(gameState) {
 // Checks current health to switch between tail chasing and food chasing.
 function chooseTarget(gameState, grid) {
   const { snakes } = gameState.board;
-  if (
-    // (snakes.length == 2 && gameState.you.health > 60) ||
-    // !gameState.board.food.length
-    !gameState.board.food.length
-  ) {
+  // if 2 snakes left
+  // go for food if close or smaller
+  // move towards attack
+  if (!gameState.board.food.length) {
     return findTail(gameState);
   } else {
     return findFood(gameState);
@@ -197,7 +196,6 @@ function isInDangerZone(zone, dangerZone) {
   dangerZone = dangerZone.filter(
     segment => segment.x == zone.x && segment.y == zone.y
   );
-  console.log(dangerZone.length);
   return dangerZone.length == 1;
 }
 
@@ -219,10 +217,13 @@ function isDeadEnd(gameState, dangerZone, move) {
       zone[1] < 0 ||
       isInDangerZone(zone, dangerZone)
     ) {
+      console.log("zone is dangerous");
+      return false;
+    } else {
       return true;
     }
   });
-
+  
   if (edgeZones.length == 0) {
     blocked = true;
   }
