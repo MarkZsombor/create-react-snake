@@ -25,8 +25,8 @@ router.post("/ping", (req, res) => {
 
 router.post("/start", function(req, res) {
   const snakeInfo = {
-    headType: "smile",
-    tailType: "fat-rattle",
+    headType: "evil",
+    tailType: "freckled",
     color: "#61DAFB"
   };
   return res.json(snakeInfo);
