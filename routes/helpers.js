@@ -195,15 +195,14 @@ function isInDangerZone(zone, dangerZone) {
   return dangerZone.length > 0;
 }
 
-function isDeadEnd(gameState, dangerZone) {
-  const myHead = gameState.you.body[0];
+function isDeadEnd(gameState, dangerZone, move) {
   const { height, width } = gameState.board;
   const safe = false;
   const edgeZones = [
-    [myHead.x + 1, myHead.y],
-    [myHead.x - 1, myHead.y],
-    [myHead.x, myHead.y + 1],
-    [myHead.x, myHead.y - 1]
+    [move.x + 1, move.y],
+    [move.x - 1, move.y],
+    [move.x, move.y + 1],
+    [move.x, move.y - 1]
   ];
 
   for (let zone of edgeZones) {
@@ -224,7 +223,7 @@ function checkDeadEnd(gameState, possibleMoves, dangerZone) {
   dangerZone = dangerZone.map(segment => [segment.x, segment.y]);
   for (let move of possibleMoves) {
     if (move.valid) {
-      if (isDeadEnd(gameState, dangerZone)) {
+      if (isDeadEnd(gameState, dangerZone, move)) {
         move.valid = false;
       }
     }
