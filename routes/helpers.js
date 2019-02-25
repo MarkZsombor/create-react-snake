@@ -45,9 +45,9 @@ function findFood(gameState) {
       gameState.board.food[i].y === gameState.board.height - 1
     ) {
       if (health > 90) {
-        distance += 10;
-      } else if (health > 40) {
         distance += 5;
+      } else if (health > 40) {
+        distance += 3;
       }
     }
 
@@ -76,13 +76,47 @@ function findTail(gameState) {
   return { target: tailPosition, type: "tail" };
 }
 
+function getOpponent(gameState) {
+  const { you, board } = gameState;
+  const { snakes } = board;
+
+  const opponents = snakes.filter(snake => snake.id != you.id);
+  return opponents[0];
+}
+
 // Checks current health to switch between tail chasing and food chasing.
 function chooseTarget(gameState, grid) {
-  const { snakes } = gameState.board;
+  const { you, board } = gameState;
+  const { snakes } = board;
   // if 2 snakes left
-  // go for food if close or smaller
-  // move towards attack
-  if (!gameState.board.food.length) {
+  if (snakes.length == 2) {
+    const food = findFood(gameState);
+    // Eat Opportunistically
+    if (board.food.length && (food.target.distance <= 3 || you.health < 50)) {
+      console.log("eating");
+      return food;
+    }
+    const opponent = getOpponent(gameState);
+    console.log("opponent", opponent);
+    // Opponent bigger and no food, so chase tail
+    if (opponent.body.length >= you.body.length && !board.food.length) {
+      console.log("too small and no food, chase tail");
+      return findTail(gameState);
+    }
+    // Opponent is bigger, go eat
+    if (opponent.body.length >= you.body.length) {
+      console.log("too small");
+      return food;
+    }
+    const myHead = you.body[0];
+    const theirHead = opponent.body[0];
+    const distToHead = getDistance(myHead.x, myHead.y, theirHead);
+    if (distToHead > 1) {
+      console.log("ATTACK");
+      return { target: theirHead, type: "opponent" };
+    }
+  }
+  if (!board.food.length) {
     return findTail(gameState);
   } else {
     return findFood(gameState);
@@ -251,6 +285,7 @@ function checkDeadEnd(gameState, possibleMoves, dangerZone) {
 
 //Marks areas on the Grid where the snake can't pass into
 function setGrid(gameState, targetType) {
+  console.log("target", targetType);
   const { you, board } = gameState;
   const { body } = you;
   const myHead = body[0];
@@ -282,22 +317,27 @@ function setGrid(gameState, targetType) {
       for (let j = 0; j < snake.body.length; j++) {
         grid.setWalkableAt(snake.body[j].x, snake.body[j].y, false);
       }
-      //Could we run into the head this turn
-      if (getDistance(snake.body[0].x, snake.body[0].y, myHead) === 2) {
-        //Decide on head collision depending on size
-        if (body.length <= snake.body.length) {
-          //Pathfinding will throw an error if we try to set a space outside the board
-          if (snake.body[0].x + 1 < board.width) {
-            grid.setWalkableAt(snake.body[0].x + 1, snake.body[0].y, false);
-          }
-          if (snake.body[0].x - 1 >= 0) {
-            grid.setWalkableAt(snake.body[0].x - 1, snake.body[0].y, false);
-          }
-          if (snake.body[0].y + 1 < board.height) {
-            grid.setWalkableAt(snake.body[0].x, snake.body[0].y + 1, false);
-          }
-          if (snake.body[0].y - 1 >= 0) {
-            grid.setWalkableAt(snake.body[0].x, snake.body[0].y - 1, false);
+      if (targetType == "opponent") {
+        console.log("set head to walkable");
+        grid.setWalkableAt(snake.body[0].x, snake.body[0].y, true);
+      } else {
+        //Could we run into the head this turn
+        if (getDistance(snake.body[0].x, snake.body[0].y, myHead) === 2) {
+          //Decide on head collision depending on size
+          if (body.length <= snake.body.length) {
+            //Pathfinding will throw an error if we try to set a space outside the board
+            if (snake.body[0].x + 1 < board.width) {
+              grid.setWalkableAt(snake.body[0].x + 1, snake.body[0].y, false);
+            }
+            if (snake.body[0].x - 1 >= 0) {
+              grid.setWalkableAt(snake.body[0].x - 1, snake.body[0].y, false);
+            }
+            if (snake.body[0].y + 1 < board.height) {
+              grid.setWalkableAt(snake.body[0].x, snake.body[0].y + 1, false);
+            }
+            if (snake.body[0].y - 1 >= 0) {
+              grid.setWalkableAt(snake.body[0].x, snake.body[0].y - 1, false);
+            }
           }
         }
       }
@@ -308,6 +348,7 @@ function setGrid(gameState, targetType) {
 }
 
 function generatePath(gameState, grid, target) {
+  console.log("target", target);
   const { you, board } = gameState;
   const myHead = you.body[0];
   // Set the board, choose the target and generate a path

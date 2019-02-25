@@ -39,21 +39,23 @@ router.post("/move", function(req, res) {
   const snakeResponse = {};
   let validPath = true;
   try {
-    const grid = setGrid(gameState);
+    console.log("turn", gameState.turn);
+    const target = chooseTarget(gameState);
+    const grid = setGrid(gameState, target.type);
     const gridBackup = grid.clone();
-    let path = generatePath(gameState, grid, chooseTarget(gameState));
+    let path = generatePath(gameState, grid, target);
     if (path.length) {
       validPath = validatePath(gameState, path);
     } else {
       validPath = false;
     }
-    console.log("path", path);
+    console.log("path", path.length);
     console.log("validPath", validPath);
 
     if (!validPath) {
       const newGrid = setGrid(req.body);
       path = generatePath(gameState, newGrid, findTail(gameState));
-      console.log("path2", path);
+      console.log("path2", path.length);
 
       if (path.length) {
         validPath = true;
