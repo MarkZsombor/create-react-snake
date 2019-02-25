@@ -153,7 +153,6 @@ function checkAllSnakes(gameState, possibleMoves, dangerZone) {
       for (let segment of dangerZone) {
         if (move.x == segment.x && move.y == segment.y) {
           move.valid = false;
-          console.log("BAD");
         }
       }
     }
@@ -192,20 +191,20 @@ function isInDangerZone(zone, dangerZone) {
   dangerZone = dangerZone.filter(
     segment => segment.x == zone.x && segment.y == zone.y
   );
-  return dangerZone.length > 0;
+  return dangerZone.length == 1;
 }
 
 function isDeadEnd(gameState, dangerZone, move) {
   const { height, width } = gameState.board;
-  const safe = false;
-  const edgeZones = [
+  let blocked = false;
+  let edgeZones = [
     [move.x + 1, move.y],
     [move.x - 1, move.y],
     [move.x, move.y + 1],
     [move.x, move.y - 1]
   ];
 
-  for (let zone of edgeZones) {
+  edgeZones = edgeZones.filter(zone => {
     if (
       zone[0] >= width ||
       zone[0] < 0 ||
@@ -215,8 +214,12 @@ function isDeadEnd(gameState, dangerZone, move) {
     ) {
       return true;
     }
+  });
+
+  if (edgeZones.length == 0) {
+    blocked = true;
   }
-  return safe;
+  return blocked;
 }
 
 function checkDeadEnd(gameState, possibleMoves, dangerZone) {
