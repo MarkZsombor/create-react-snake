@@ -415,9 +415,8 @@ function noPathFallback(gameState) {
     }
 
     //Recheck possibleMoves but ignoring larger snakes
-    possibleMoves = checkSelf(gameState, possibleMoves);
+    possibleMoves = checkAllSnakes(gameState, possibleMoves, dangerZone);
     possibleMoves = checkEdges(gameState, possibleMoves);
-    possibleMoves = checkSnakes(gameState, possibleMoves);
     possibleMoves = checkDeadEnd(gameState, possibleMoves, dangerZone);
 
     validMoves = possibleMoves.filter(move => move.valid);
